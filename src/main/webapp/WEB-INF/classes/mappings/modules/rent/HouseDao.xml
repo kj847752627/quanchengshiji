@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.rent.dao.HouseDao">
+
+	<sql id="houseColumns">
+		a.id AS "id",
+		a.category_id AS "category.id",
+		a.lease_type AS "leaseType",
+		a.area_id AS "area.id",
+		a.landlord_id AS "landlord.id",
+		a.acreage AS "acreage",
+		a.type AS "type",
+		a.price AS "price",
+		a.lease_way AS "leaseWay",
+		a.facility AS "facility",
+		a.headline AS "headline",
+		a.subhead AS "subhead",
+		a.keywords AS "keywords",
+		a.description AS "description",
+		a.master_path AS "masterPath",
+		a.del_flag AS "delFlag",
+		a.view_config AS "viewConfig",
+		a.create_date AS "createDate",
+		a.custom_content_view AS "customContentView",
+		a.posid AS "posid",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.create_by AS "createBy.id",
+		a.weight AS "weight",
+		a.hits AS "hits",
+		a.weight_date AS "weightDate",
+		a4.name AS "area.name",
+		a4.parent_ids AS "area.parentIds",
+		a4.parent_id AS "area.parent.id",
+		c.name AS "category.name",
+		u5.name AS "landlord.name"
+	</sql>
+
+	<sql id="houseJoins">
+		LEFT JOIN cms_category c ON c.id = a.category_id
+		LEFT JOIN sys_area a4 ON a4.id = a.area_id
+		LEFT JOIN sys_user u5 ON u5.id = a.landlord_id
+	</sql>
+
+	<select id="get" resultType="house">
+		SELECT
+		<include refid="houseColumns" />
+		FROM rent_house a
+		<include refid="houseJoins" />
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="getAreaHouseCount" resultType="int">
+		SELECT count(*)
+		FROM rent_house a
+		WHERE a.area_id = #{areaId}
+	</select>
+
+	<select id="findList" resultType="house">
+		SELECT
+		<include refid="houseColumns" />
+		FROM rent_house a
+		<include refid="houseJoins" />
+		<where>
+			<if test="delFlag != null and delFlag != ''">
+				a.del_flag = #{delFlag}
+			</if>
+			<if test="posid != null and posid != ''">
+				a.posid = #{posid}
+			</if>
+			<if test="headline != null and headline != ''">
+				AND (a.headline LIKE
+				<if test="dbName == 'oracle'">'%'||#{headline}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{headline}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{headline},'%')</if>
+				or a.keywords LIKE
+				<if test="dbName == 'oracle'">'%'||#{headline}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{headline}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{headline},'%')</if>
+				or a.subhead LIKE
+				<if test="dbName == 'oracle'">'%'||#{headline}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{headline}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{headline},'%')</if>
+				)
+			</if>
+			<if test="area != null and area.id != ''">
+				AND (a.area_id = #{area.id}
+					or a4.parent_ids like
+						<if test="dbName == 'oracle'">'%'||#{area.id}||'%'</if>
+						<if test="dbName == 'mssql'">'%,'+#{area.id}+',%'</if>
+						<if test="dbName == 'mysql'">CONCAT('%,', #{area.id}, ',%')</if>
+				)
+			</if>
+			
+			<choose>
+				<when test="beginPrice != null and endPrice != null and beginPrice != '' and endPrice != ''">
+					AND a.price BETWEEN #{beginPrice} AND #{endPrice}
+				</when>
+				<otherwise>
+					<if test="beginPrice != null and beginPrice != ''">
+						AND a.price >= #{beginPrice}
+					</if>
+				</otherwise>
+			</choose>
+			
+			<if test="type != null and type != ''">
+				AND a.type = #{type}
+			</if>
+			<if test="leaseWay != null and leaseWay != ''">
+				AND a.lease_way = #{leaseWay}
+			</if>
+			<if test="leaseType != null and leaseType != ''">
+				AND a.lease_type = #{leaseType}
+			</if>
+			<if test="landlord != null and landlord.id != null and landlord.id != ''">
+				AND a.landlord_id = #{landlord.id}
+			</if>
+			<choose>
+				<when test="beginCreateDate != null and endCreateDate != null and beginCreateDate != '' and endCreateDate != ''">
+					AND DATE_FORMAT(a.create_date,'%Y-%m-%d') BETWEEN DATE_FORMAT(#{beginCreateDate},'%Y-%m-%d')
+					AND DATE_FORMAT(#{endCreateDate},'%Y-%m-%d')
+				</when>
+				<otherwise>
+					<if test="beginCreateDate != null and beginCreateDate != ''">
+						AND DATE_FORMAT(a.create_date,'%Y-%m-%d') = DATE_FORMAT(#{beginCreateDate},'%Y-%m-%d')
+					</if>
+				</otherwise>
+			</choose>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findAllList" resultType="house">
+		SELECT
+		<include refid="houseColumns" />
+		FROM rent_house a
+		<include refid="houseJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		<selectKey keyProperty="id" resultType="String">
+			select LAST_INSERT_ID()
+		</selectKey>
+		INSERT INTO rent_house(
+		category_id,
+		lease_type,
+		area_id,
+		landlord_id,
+		acreage,
+		type,
+		price,
+		lease_way,
+		facility,
+		headline,
+		subhead,
+		keywords,
+		description,
+		allow_comment,
+		master_path,
+		del_flag,
+		view_config,
+		create_date,
+		custom_content_view,
+		posid,
+		update_by,
+		update_date,
+		create_by,
+		weight,
+		hits,
+		weight_date
+		) VALUES (
+		#{category.id},
+		#{leaseType},
+		#{area.id},
+		#{landlord.id},
+		#{acreage},
+		#{type},
+		#{price},
+		#{leaseWay},
+		#{facility},
+		#{headline},
+		#{subhead},
+		#{keywords},
+		#{description},
+		#{allowComment},
+		#{masterPath},
+		#{delFlag},
+		#{viewConfig},
+		#{createDate},
+		#{customContentView},
+		#{posid},
+		#{updateBy.id},
+		#{updateDate},
+		#{createBy.id},
+		#{weight},
+		#{hits},
+		#{weightDate}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE rent_house SET
+		category_id = #{category.id},
+		lease_type = #{leaseType},
+		area_id = #{area.id},
+		landlord_id = #{landlord.id},
+		acreage = #{acreage},
+		type = #{type},
+		price = #{price},
+		lease_way = #{leaseWay},
+		facility = #{facility},
+		headline = #{headline},
+		subhead = #{subhead},
+		keywords = #{keywords},
+		description = #{description},
+		allow_comment = #{allowComment},
+		master_path = #{masterPath},
+		del_flag = #{delFlag},
+		view_config = #{viewConfig},
+		create_date = #{createDate},
+		custom_content_view = #{customContentView},
+		posid = #{posid},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate},
+		create_by = #{createBy.id},
+		weight = #{weight},
+		hits = #{hits},
+		weight_date = #{weightDate}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE rent_house SET
+		del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+	<select id="findByIdIn" resultType="house">
+		SELECT
+		<include refid="houseColumns" />
+		from rent_house a where
+		<where>
+			id in (${id});
+		</where>
+	</select>
+
+	<update id="updateExpiredWeight">
+		update rent_house SET
+		weight = 0
+		WHERE weight &gt; 0 AND weight_date &lt;
+		<if test="dbName == 'oracle'">sysdate</if>
+		<if test="dbName == 'mssql'">FLOOR(CONVERT(FLOAT,GETDATE()))</if>
+		<if test="dbName == 'mysql'">CURDATE()</if>
+	</update>
+
+	<update id="updateHitsAddOne">
+		update rent_house set
+		hits = hits+1
+		WHERE id = #{id}
+	</update>
+
+	<select id="findStats" resultType="Category">
+		select max(c.id) AS "id",
+		max(c.name) AS "name",
+		max(cp.id) AS "parent.id",
+		max(cp.name) AS "parent.name",
+		count(*) AS "cnt",
+		sum(a.hits) AS "hits",
+		max(a.update_date) as "updateDate",
+		max(o.id) AS "office.id",
+		max(o.name) AS "office.name"
+		FROM rent_house a
+		RIGHT JOIN cms_category c ON c.id = a.category_id
+		JOIN cms_category cp ON c.parent_id = cp.id
+		JOIN sys_office o ON o.id = c.office_id
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			AND c.site_id = #{site.id}
+			<if test="office.id != null and office.id != ''">
+				AND (c.office_id = #{office.id} OR o.parent_ids like
+				<if test="dbName == 'oracle'">'%'||#{office.id}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{office.id}+'%'</if>
+				<if test="dbName == 'mysql'">CONCAT('%', #{office.id}, '%')</if>
+				)
+			</if>
+			<if test="beginDate != null and beginDate != ''">
+				AND a.update_date <![CDATA[ >= #{beginDate} ]]>
+			</if>
+			<if test="endDate != null and endDate != ''">
+				AND a.update_date <![CDATA[ <= #{endDate} ]]>
+			</if>
+			<if test="id != null and id != ''">
+				AND (c.id = #{id} OR c.parent_ids LIKE
+				<if test="dbName == 'oracle'">'%'||#{id}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{id}+'%'</if>
+				<if test="dbName == 'mysql'">CONCAT('%', #{id}, '%')</if>
+				)
+			</if>
+			group by cp.sort, cp.id, c.sort, c.id
+			order by cp.sort, cp.id, c.sort, c.id
+		</where>
+	</select>
+	
+</mapper>

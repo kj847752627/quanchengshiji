@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.sell.dao.SellTenantTrackDao">
+    
+	<sql id="sellTenantTrackColumns">
+		a.id AS "id",
+		a.tenant_id AS "tenant.id",
+		a.content AS "content",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		t2.name AS "tenant.name",
+		t2.phone AS "tenant.phone",
+		u4.name AS "createBy.name",
+		u6.name AS "updateBy.name"
+	</sql>
+
+	<sql id="sellTenantTrackJoins">
+		LEFT JOIN sell_tenant t2 ON t2.id = a.tenant_id
+		LEFT JOIN sys_user u4 ON u4.id = a.create_by
+		LEFT JOIN sys_user u6 ON u6.id = a.update_by
+		LEFT JOIN sys_office o1 ON o1.id = u4.office_id
+	</sql>
+    
+	<select id="get" resultType="SellTenantTrack">
+		SELECT 
+			<include refid="sellTenantTrackColumns"/>
+		FROM sell_tenant_track a
+		<include refid="sellTenantTrackJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="SellTenantTrack">
+		SELECT 
+			<include refid="sellTenantTrackColumns"/>
+		FROM sell_tenant_track a
+		<include refid="sellTenantTrackJoins"/>
+		<where>
+			1=1
+			<if test="tenant != null and tenant.id != null and tenant.id != ''">
+				AND a.tenant_id = #{tenant.id}
+			</if>
+			<if test="content != null and content != ''">
+				AND a.content LIKE 
+					<if test="dbName == 'oracle'">'%'||#{content}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{content}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{content},'%')</if>
+			</if>
+			<if test="createBy != null and createBy.id != null and createBy.id != ''">
+				AND a.create_by = #{createBy.id}
+			</if>
+			<if test="delFlag != null and delFlag != ''">
+				AND a.del_flag = #{delFlag}
+			</if>
+		</where>
+		<!-- 数据范围过滤 -->
+		${sqlMap.dsf}
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="SellTenantTrack">
+		SELECT 
+			<include refid="sellTenantTrackColumns"/>
+		FROM sell_tenant_track a
+		<include refid="sellTenantTrackJoins"/>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		<selectKey keyProperty="id" resultType="String">
+            select LAST_INSERT_ID()
+        </selectKey>
+		INSERT INTO sell_tenant_track(
+			tenant_id,
+			content,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			del_flag
+		) VALUES (
+			#{tenant.id},
+			#{content},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE sell_tenant_track SET 	
+			tenant_id = #{tenant.id},
+			content = #{content},
+			del_flag = #{delFlag}
+		WHERE id = #{id}
+	</update>
+	
+	<!-- <update id="delete">
+		UPDATE sell_tenant_track SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update> -->
+	
+	<delete id="delete">
+        delete from sell_tenant_track where id=#{id}
+    </delete>
+</mapper>

@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.sell.dao.SellTenantDao">
+    
+	<sql id="sellTenantColumns">
+		a.id AS "id",
+		a.origin AS "origin",
+		a.name AS "name",
+		a.sex AS "sex",
+		a.phone AS "phone",
+		a.id_card AS "idCard",
+		a.area_id AS "area.id",
+		a.price AS "price",
+		a.lv AS "lv",
+		a.call_time AS "callTime",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a7.name AS "area.name",
+		u11.name AS "createBy.name",
+		u13.name AS "updateBy.name"
+	</sql>
+	
+	<sql id="sellTenantJoins">
+		LEFT JOIN sys_area a7 ON a7.id = a.area_id
+		LEFT JOIN sys_user u11 ON u11.id = a.create_by
+		LEFT JOIN sys_user u13 ON u13.id = a.update_by
+		LEFT JOIN sys_office o1 ON o1.id = u11.office_id
+	</sql>
+    
+	<select id="get" resultType="SellTenant">
+		SELECT 
+			<include refid="sellTenantColumns"/>
+		FROM sell_tenant a
+		<include refid="sellTenantJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="SellTenant">
+		SELECT 
+			<include refid="sellTenantColumns"/>
+		FROM sell_tenant a
+		<include refid="sellTenantJoins"/>
+		<where>
+			1 = 1
+			<if test="phone != null and phone != ''">
+				AND a.phone = #{phone}
+			</if>
+			<if test="origin != null and origin != ''">
+				AND a.origin = #{origin}
+			</if>
+			<if test="name != null and name != ''">
+				AND CONCAT(a.name,a.phone,a.id_card) LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+			<if test="sex != null and sex != ''">
+				AND a.sex = #{sex}
+			</if>
+			<if test="area != null and area.id != null and area.id != ''">
+				AND a.area_id = #{area.id}
+			</if>
+			<if test="price != null and price != ''">
+				AND a.price = #{price}
+			</if>
+			<if test="lv != null and lv != ''">
+				AND a.lv = #{lv}
+			</if>
+			<if test="remarks != null and remarks != ''">
+				AND a.remarks = #{remarks}
+			</if>
+			<if test="createBy != null and createBy.id != null and createBy.id != ''">
+				AND a.create_by = #{createBy.id}
+			</if>
+			<if test="delFlag != null and delFlag != ''">
+				AND a.del_flag = #{delFlag}
+			</if>
+		</where>
+		<!-- 数据范围过滤 -->
+		${sqlMap.dsf}
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="SellTenant">
+		SELECT 
+			<include refid="sellTenantColumns"/>
+		FROM sell_tenant a
+		<include refid="sellTenantJoins"/>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		<selectKey keyProperty="id" resultType="String">
+            select LAST_INSERT_ID()
+        </selectKey>
+		INSERT INTO sell_tenant(
+			origin,
+			name,
+			sex,
+			phone,
+			id_card,
+			area_id,
+			price,
+			lv,
+			call_time,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{origin},
+			#{name},
+			#{sex},
+			#{phone},
+			#{idCard},
+			#{area.id},
+			#{price},
+			#{lv},
+			#{callTime},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<insert id="zyInsert">
+		<selectKey keyProperty="id" resultType="String">
+            select LAST_INSERT_ID()
+        </selectKey>
+		INSERT INTO sell_tenant(
+			origin,
+			name,
+			sex,
+			phone,
+			id_card,
+			area_id,
+			price,
+			lv,
+			call_time,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{origin},
+			#{name},
+			#{sex},
+			#{phone},
+			#{idCard},
+			#{area.id},
+			#{price},
+			#{lv},
+			#{callTime},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE sell_tenant SET 	
+			origin = #{origin},
+			name = #{name},
+			sex = #{sex},
+			phone = #{phone},
+			id_card = #{idCard},
+			area_id = #{area.id},
+			price = #{price},
+			lv = #{lv},
+			call_time = #{callTime},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			del_flag = #{delFlag}
+		WHERE id = #{id}
+	</update>
+	
+	<!-- <update id="delete">
+		UPDATE sell_tenant SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update> -->
+	
+	<delete id="delete">
+        delete from sell_tenant where id=#{id}
+    </delete>
+</mapper>

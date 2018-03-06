@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.fico.dao.DisburseDao">
+    
+	<sql id="disburseColumns">
+		a.id AS "id",
+		a.company_id AS "company.id",
+		a.office_id AS "office.id",
+		a.type AS "type",
+		a.sum AS "sum",
+		a.disburse_date AS "disburseDate",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.audit_by AS "auditBy.id",
+		a.audit_date AS "auditDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		o2.name AS "office.name",
+		o3.name AS "company.name",
+		u7.name AS "createBy.name"
+	</sql>
+	
+	<sql id="disburseJoins">
+		LEFT JOIN sys_office o3 ON o3.id = a.company_id
+		LEFT JOIN sys_office o2 ON o2.id = a.office_id
+		LEFT JOIN sys_user u7 ON u7.id = a.create_by
+	</sql>
+    
+	<select id="get" resultType="Disburse">
+		SELECT 
+			<include refid="disburseColumns"/>
+		FROM fico_disburse a
+		<include refid="disburseJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="Disburse">
+		SELECT 
+			<include refid="disburseColumns"/>
+		FROM fico_disburse a
+		<include refid="disburseJoins"/>
+		<where>
+			<if test="office != null and office.id != null and office.id != ''">
+				AND a.office_id = #{office.id}
+			</if>
+			<if test="company != null and company != null and company.id != ''">
+				AND a.company_id = #{company.id}
+			</if>
+			<if test="type != null and type != ''">
+				AND a.type = #{type}
+			</if>
+			<if test="beginSum != null and endSum != null and beginSum != '' and endSum != ''">
+				AND a.sum BETWEEN #{beginSum} AND #{endSum}
+			</if>
+			<if test="beginDisburseDate != null and endDisburseDate != null and beginDisburseDate != '' and endDisburseDate != ''">
+				AND a.disburse_date BETWEEN #{beginDisburseDate} AND #{endDisburseDate}
+			</if>
+			<if test="createBy != null and createBy.id != null and createBy.id != ''">
+				AND a.create_by = #{createBy.id}
+			</if>
+			<if test="beginCreateDate != null and endCreateDate != null and beginCreateDate != '' and endCreateDate != ''">
+				AND a.create_date BETWEEN #{beginCreateDate} AND #{endCreateDate}
+			</if>
+			<if test="beginAuditDate != null and endAuditDate != null and beginAuditDate != '' and endAuditDate != ''">
+				AND a.audit_date BETWEEN #{beginAuditDate} AND #{endAuditDate}
+			</if>
+			<if test="remarks != null and remarks != ''">
+				AND a.remarks LIKE 
+					<if test="dbName == 'oracle'">'%'||#{remarks}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{remarks}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{remarks},'%')</if>
+			</if>
+			<if test="delFlag != null and delFlag != ''">
+				AND a.del_flag = #{delFlag}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="Disburse">
+		SELECT 
+			<include refid="disburseColumns"/>
+		FROM fico_disburse a
+		<include refid="disburseJoins"/>
+		<where>
+			<if test="delFlag != null and delFlag != ''">
+				AND a.del_flag = #{delFlag}
+			</if>
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+	<selectKey keyProperty="id" resultType="String">
+			select LAST_INSERT_ID()
+		</selectKey>
+		INSERT INTO fico_disburse(
+			company_id,
+			office_id,
+			type,
+			sum,
+			disburse_date,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{office.id},
+			#{company.id},
+			#{type},
+			#{sum},
+			#{disburseDate},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE fico_disburse SET 	
+			office_id = #{office.id},
+			company_id = #{company.id},
+			type = #{type},
+			sum = #{sum},
+			disburse_date = #{disburseDate},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete" >
+		UPDATE fico_disburse SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="audit" >
+		UPDATE fico_disburse SET 
+			audit_by = #{auditBy.id},
+			audit_date = #{auditDate},
+			del_flag = #{delFlag}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

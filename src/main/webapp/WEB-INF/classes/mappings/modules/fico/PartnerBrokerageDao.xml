@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.fico.dao.PartnerBrokerageDao">
+    
+	<sql id="partnerBrokerageColumns">
+		a.id AS "id",
+		a.company_id AS "company.id",
+		a.office_id AS "office.id",
+		a.area_id AS "area.id",
+		a.brokerage AS "brokerage",
+		a.partner_by AS "partnerBy.id",
+		a.in_date AS "inDate",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.audit_by AS "auditBy.id",
+		a.audit_date AS "auditDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		o2.name AS "office.name",
+		o3.name AS "company.name",
+		a3.name AS "area.name",
+		u5.name AS "partnerBy.name",
+		u6.name AS "createBy.name"
+	</sql>
+
+	<sql id="partnerBrokerageJoins">
+		LEFT JOIN sys_office o3 ON o3.id = a.company_id
+		LEFT JOIN sys_office o2 ON o2.id = a.office_id
+		LEFT JOIN sys_area a3 ON a3.id = a.area_id
+		LEFT JOIN sys_user u5 ON u5.id = a.partner_by
+		LEFT JOIN sys_user u6 ON u6.id = a.create_by
+	</sql>
+    
+	<select id="get" resultType="PartnerBrokerage">
+		SELECT 
+			<include refid="partnerBrokerageColumns"/>
+		FROM fico_partner_brokerage a
+		<include refid="partnerBrokerageJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="PartnerBrokerage">
+		SELECT 
+			<include refid="partnerBrokerageColumns"/>
+		FROM fico_partner_brokerage a
+		<include refid="partnerBrokerageJoins"/>
+		<where>
+			<if test="company != null and company != null and company.id != ''">
+				AND a.company_id = #{company.id}
+			</if>
+			<if test="office != null and office.id != null and office.id != ''">
+				AND a.office_id = #{office.id}
+			</if>
+			<if test="area != null and area.id != null and area.id != ''">
+				AND a.area_id = #{area.id}
+			</if>
+			<if test="beginBrokerage != null and endBrokerage != null and beginBrokerage != '' and endBrokerage != ''">
+				AND a.brokerage BETWEEN #{beginBrokerage} AND #{endBrokerage}
+			</if>
+			<if test="partnerBy != null and partnerBy.id != null and partnerBy.id != ''">
+				AND a.partner_by = #{partnerBy.id}
+			</if>
+			<if test="beginInDate != null and endInDate != null and beginInDate != '' and endInDate != ''">
+				AND a.in_date BETWEEN #{beginInDate} AND #{endInDate}
+			</if>
+			<if test="delFlag != null and delFlag != ''">
+				AND a.del_flag = #{delFlag}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="PartnerBrokerage">
+		SELECT
+			<include refid="partnerBrokerageColumns"/>
+		FROM fico_partner_brokerage a
+		<include refid="partnerBrokerageJoins"/>
+		<where>
+			<if test="delFlag != null and delFlag != ''">
+				AND a.del_flag = #{delFlag}
+			</if>
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		<selectKey keyProperty="id" resultType="String">
+			select LAST_INSERT_ID()
+		</selectKey>
+		INSERT INTO fico_partner_brokerage(
+			company_id,
+			office_id,
+			area_id,
+			brokerage,
+			partner_by,
+			in_date,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{company.id},
+			#{office.id},
+			#{area.id},
+			#{brokerage},
+			#{partnerBy.id},
+			#{inDate},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE fico_partner_brokerage SET
+			company_id = #{company.id},
+			office_id = #{office.id},
+			area_id = #{area.id},
+			brokerage = #{brokerage},
+			partner_by = #{partnerBy.id},
+			in_date = #{inDate},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE fico_partner_brokerage SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="audit" >
+		UPDATE fico_partner_brokerage SET 
+			audit_by = #{auditBy.id},
+			audit_date = #{auditDate},
+			del_flag = #{delFlag}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.rent.dao.HouseImgDao">
+    
+	<sql id="houseImgColumns">
+		a.id AS "id",
+		a.house_id AS "house.id",
+		a.path AS "path",
+		a.type AS "type",
+		a.sort AS "sort"
+	</sql>
+	
+	<sql id="houseImgJoins">
+		LEFT JOIN rent_house b ON b.id = a.house_id
+	</sql>
+    
+	<select id="get" resultType="houseImg">
+		SELECT 
+			<include refid="houseImgColumns"/>
+		FROM rent_house_img a
+		<include refid="houseImgJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="houseImg">
+		SELECT 
+			<include refid="houseImgColumns"/>
+		FROM rent_house_img a
+		<include refid="houseImgJoins"/>
+		<where>
+			<if test="id != null and id != ''">
+				AND a.id = #{id}
+			</if>
+			<if test="house != null and house.id != null and house.id != ''">
+				AND a.house_id = #{house.id}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="houseImg">
+		SELECT 
+			<include refid="houseImgColumns"/>
+		FROM rent_house_img a
+		<include refid="houseImgJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+	<selectKey keyProperty="id" resultType="String">
+            select LAST_INSERT_ID()
+        </selectKey>
+		INSERT INTO rent_house_img(
+			house_id,
+			path,
+			type,
+			sort
+		) VALUES (
+			#{house.id},
+			#{path},
+			#{type},
+			#{sort}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE rent_house_img SET 	
+			path = #{path},
+			type = #{type},
+			sort = #{sort}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM rent_house_img
+		<choose>
+			<when test="id !=null and id != ''">
+				WHERE id = #{id}
+			</when>
+			<otherwise>
+				WHERE house_id = #{house.id}
+			</otherwise>
+		</choose>
+	</update>
+	
+	
+	
+</mapper>

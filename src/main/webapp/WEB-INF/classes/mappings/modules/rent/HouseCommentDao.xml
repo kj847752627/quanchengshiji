@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.rent.dao.HouseCommentDao">
+    
+	<sql id="houseCommentColumns">
+		a.id AS "id",
+		a.house_id AS "house.id",
+		a.category_id AS "category.id",
+		a.content AS "content",
+		a.comment_user_id AS "user.id",
+		a.ip AS "ip",
+		a.create_date AS "createDate",
+		a.serve_grade AS "serveGrade",
+		a.quality_grade AS "qualityGrade",
+		a.area_grade AS "areaGrade",
+		a.audit_user_id AS "auditUser.id",
+		a.audit_date AS "auditDate",
+		a.del_flag AS "delFlag",
+		b.headline AS "house.headline",
+		u.name AS "user.name"
+	</sql>
+	
+	<sql id="houseCommentJoins">
+		LEFT JOIN rent_house b ON b.id = a.house_id
+		LEFT JOIN sys_user u ON u.id = a.comment_user_id
+	</sql>
+    
+	<select id="get" resultType="HouseComment">
+		SELECT 
+			<include refid="houseCommentColumns"/>
+		FROM rent_comment a
+		<include refid="houseCommentJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="HouseComment">
+		SELECT 
+			<include refid="houseCommentColumns"/>
+		FROM rent_comment a
+		<include refid="houseCommentJoins"/>
+		<where>
+			<choose>
+				<when test="delFlag!=null and delFlag!=''">a.del_flag = #{delFlag}</when>
+				<otherwise>a.del_flag = #{DEL_FLAG_NORMAL}</otherwise>
+			</choose>
+			<if test="house != null and house.id != null and house.id != ''">
+				AND a.house_id = #{house.id}
+			</if>
+			
+			<if test="house != null and house.headline!=null and house.headline!=''">
+				AND b.headline LIKE
+				<if test="dbName == 'oracle'">'%'||#{house.headline}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{house.headline}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{house.headline},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.create_date ASC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="HouseComment">
+		SELECT 
+			<include refid="houseCommentColumns"/>
+		FROM rent_comment a
+		<include refid="houseCommentJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.create_date ASC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO rent_comment(
+			id,
+			house_id,
+			category_id,
+			content,
+			comment_user_id,
+			ip,
+			create_date,
+			serve_grade,
+			quality_grade,
+			area_grade,
+			audit_user_id,
+			audit_date,
+			del_flag
+		) VALUES (
+			#{id},
+			#{house.id},
+			#{category.id},
+			#{content},
+			#{user.id},
+			#{ip},
+			#{createDate},
+			#{serveGrade},
+			#{qualityGrade},
+			#{areaGrade},
+			#{auditUser.id},
+			#{auditDate},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE rent_comment SET 	
+			audit_user_id = #{auditUser.id},
+			audit_date = #{auditDate},
+			del_flag = #{delFlag}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE rent_comment SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		<choose>
+			<when test="id !=null and id != ''">
+				WHERE id = #{id}
+			</when>
+			<otherwise>
+				WHERE house_id = #{house.id}
+			</otherwise>
+		</choose>
+	</update>
+	
+</mapper>

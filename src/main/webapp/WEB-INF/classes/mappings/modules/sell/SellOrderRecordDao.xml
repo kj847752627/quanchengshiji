@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.sell.dao.SellOrderRecordDao">
+    
+	<sql id="sellOrderRecordColumns">
+		a.id AS "id",
+		a.tenant_id AS "tenant.id",
+		a.area_id AS "area.id",
+		a.house_no AS "houseNo",
+		a.price AS "price",
+		a.landlord_id AS "landlord.id",
+		a.rebates AS "rebates",
+		a.aider_ids AS "aiderIds",
+		a.aider_pattern AS "aiderPattern",
+		a.billing_date AS "billingDate",
+		a.contract_start_date AS "contractStartDate",
+		a.contract_end_date AS "contractEndDate",
+		a.audit_id AS "audit.id",
+		a.audit_date AS "auditDate",
+		a.audit_explain AS "auditExplain",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		t2.name AS "tenant.name",
+		t2.id_card AS "tenant.idCard",
+		t2.phone AS "tenant.phone",
+		a3.name AS "area.name",
+		u6.name AS "landlord.name",
+		u13.name AS "audit.name",
+		u16.name AS "createBy.name",
+		u18.name AS "updateBy.name"
+	</sql>
+	
+	<sql id="sellOrderRecordJoins">
+		LEFT JOIN sell_tenant t2 ON t2.id = a.tenant_id
+		LEFT JOIN sys_area a3 ON a3.id = a.area_id
+		LEFT JOIN sys_user u6 ON u6.id = a.landlord_id
+		LEFT JOIN sys_user u13 ON u13.id = a.audit_id
+		LEFT JOIN sys_user u16 ON u16.id = a.create_by
+		LEFT JOIN sys_user u18 ON u18.id = a.update_by
+		LEFT JOIN sys_office o1 ON o1.id = u16.update_by
+	</sql>
+    
+	<select id="get" resultType="SellOrderRecord">
+		SELECT 
+			<include refid="sellOrderRecordColumns"/>
+		FROM sell_order_record a
+		<include refid="sellOrderRecordJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="SellOrderRecord">
+		SELECT 
+			<include refid="sellOrderRecordColumns"/>
+		FROM sell_order_record a
+		<include refid="sellOrderRecordJoins"/>
+		<where>
+			<if test="tenant != null and tenant.id != null and tenant.id != ''">
+				AND a.tenant_id = #{tenant.id}
+			</if>
+			<if test="area != null and area.id != null and area.id != ''">
+				AND a.area_id = #{area.id}
+			</if>
+			<if test="houseNo != null and houseNo != ''">
+				AND a.house_no = #{houseNo}
+			</if>
+			<if test="price != null and price != ''">
+				AND a.price = #{price}
+			</if>
+			<if test="landlord != null and landlord.id != null and landlord.id != ''">
+				AND a.landlord_id = #{landlord.id}
+			</if>
+			<if test="aiderIds != null and aiderIds != ''">
+				AND a.aider_ids = #{aiderIds}
+			</if>
+			
+			<if test="beginBillingDate != null and endBillingDate != null and beginBillingDate != '' and endBillingDate != ''">
+				AND a.billing_date BETWEEN #{beginBillingDate} AND #{endBillingDate}
+			</if>
+			<if test="contractStartDate != null and contractStartDate != ''">
+				AND a.contract_start_date &gt;= #{contractStartDate}
+			</if>
+			<if test="contractEndDate != null and contractEndDate != ''">
+				AND a.contract_end_date &lt; #{contractEndDate}
+			</if>
+			<if test="audit != null and audit.id != null and audit.id != ''">
+				AND a.audit_id = #{audit.id}
+			</if>
+			<if test="beginAuditDate != null and endAuditDate != null and beginAuditDate != '' and endAuditDate != ''">
+				AND a.audit_date BETWEEN #{beginAuditDate} AND #{endAuditDate}
+			</if>
+			<if test="createBy != null and createBy.id != null and createBy.id != ''">
+				AND a.create_by = #{createBy.id}
+			</if>
+			<if test="updateBy != null and updateBy.id != null and updateBy.id != ''">
+				AND a.update_by = #{updateBy.id}
+			</if>
+			<if test="delFlag != null and delFlag != ''">
+				AND a.del_flag = #{delFlag}
+			</if>
+		</where>
+		<!-- 数据范围过滤 -->
+		${sqlMap.dsf}
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY concat(a.billing_date) DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="SellOrderRecord">
+		SELECT 
+			<include refid="sellOrderRecordColumns"/>
+		FROM sell_order_record a
+		<include refid="sellOrderRecordJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		<selectKey keyProperty="id" resultType="String">
+            select LAST_INSERT_ID()
+        </selectKey>
+		INSERT INTO sell_order_record(
+			tenant_id,
+			area_id,
+			house_no,
+			price,
+			landlord_id,
+			rebates,
+			aider_ids,
+			aider_pattern,
+			billing_date,
+			contract_start_date,
+			contract_end_date,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{tenant.id},
+			#{area.id},
+			#{houseNo},
+			#{price},
+			#{landlord.id},
+			#{rebates},
+			#{aiderIds},
+			#{aiderPattern},
+			#{billingDate},
+			#{contractStartDate},
+			#{contractEndDate},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE sell_order_record SET 	
+			tenant_id = #{tenant.id},
+			area_id = #{area.id},
+			house_no = #{houseNo},
+			price = #{price},
+			landlord_id = #{landlord.id},
+			rebates = #{rebates},
+			aider_ids = #{aiderIds},
+			aider_pattern = #{aiderPattern},
+			billing_date = #{billingDate},
+			contract_start_date = #{contractStartDate},
+			contract_end_date = #{contractEndDate},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="audit">
+		UPDATE sell_order_record SET
+			audit_id = #{audit.id},
+			audit_date = #{auditDate},
+			audit_explain = #{auditExplain},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			del_flag = #{delFlag}
+		WHERE id = #{id}
+	</update>
+	
+	<delete id="delete">
+        delete from sell_order_record where id=#{id}
+    </delete>
+	
+</mapper>

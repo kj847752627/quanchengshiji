@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.rent.dao.HouseRoomDao">
+    
+	<sql id="houseRoomColumns">
+		a.id AS "id",
+		a.house_id AS "house.id",
+		a.name AS "name",
+		a.price AS "price",
+		a.area AS "area",
+		a.image AS "image",
+		a.facility AS "facility",
+		a.flag AS "flag"
+	</sql>
+	
+	<sql id="houseRoomJoins">
+		LEFT JOIN rent_house b ON b.id = a.house_id
+	</sql>
+    
+	<select id="get" resultType="houseRoom">
+		SELECT 
+			<include refid="houseRoomColumns"/>
+		FROM rent_house_room a
+		<include refid="houseRoomJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="houseRoom">
+		SELECT 
+			<include refid="houseRoomColumns"/>
+		FROM rent_house_room a
+		<include refid="houseRoomJoins"/>
+		<where>
+			<if test="id != null and id != ''">
+				AND a.id = #{id}
+			</if>
+			<if test="house != null and house.id != null and house.id != ''">
+				AND a.house_id = #{house.id}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="houseRoom">
+		SELECT 
+			<include refid="houseRoomColumns"/>
+		FROM rent_house_room a
+		<include refid="houseRoomJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+	<selectKey keyProperty="id" resultType="String">
+            select LAST_INSERT_ID()
+        </selectKey>
+		INSERT INTO rent_house_room(
+			house_id,
+			name,
+			price,
+			area,
+			image,
+			facility,
+			flag
+		) VALUES (
+			#{house.id},
+			#{name},
+			#{price},
+			#{area},
+			#{image},
+			#{facility},
+			#{flag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE rent_house_room SET 	
+			name = #{name},
+			price = #{price},
+			area = #{area},
+			image = #{image},
+			facility = #{facility},
+			flag = #{flag}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM rent_house_room
+		<choose>
+			<when test="id !=null and id != ''">
+				WHERE id = #{id}
+			</when>
+			<otherwise>
+				WHERE house_id = #{house.id}
+			</otherwise>
+		</choose>
+	</update>
+	
+</mapper>
